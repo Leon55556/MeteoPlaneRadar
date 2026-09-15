@@ -1,4 +1,4 @@
-Toto je fork z - [https://github.com/petus/MeteoPlaneRadar # MeteoPlaneRadar od Chiptron 
+Toto je fork z - [https://github.com/petus/MeteoPlaneRadar # MeteoPlaneRadar od Chiptron. Přidaná je stránka pro zobrazení cen amerických akcií a BTC. Akcie je možné zadávat z webového rozhraní. 
 
 # MeteoPlaneRadar
 
