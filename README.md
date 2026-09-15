@@ -1,3 +1,5 @@
+Toto je fork z - [https://github.com/petus/MeteoPlaneRadar # MeteoPlaneRadar od Chiptron 
+
 # MeteoPlaneRadar
 
 **Hodiny, radar letadel, srážkový meteoradar a předpověď počasí na kulatém
