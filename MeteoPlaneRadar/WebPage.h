@@ -149,12 +149,20 @@ td:first-child{color:var(--mut);width:50%}
       <label class="chk"><input type="checkbox" id="sPlanes"><span data-i18n="scrPlanes">Letadla</span></label>
       <label class="chk"><input type="checkbox" id="sMeteo"><span data-i18n="scrMeteo">Meteoradar</span></label>
       <label class="chk"><input type="checkbox" id="sForecast"><span data-i18n="scrForecast">Předpověď</span></label>
+      <label class="chk"><input type="checkbox" id="sShares"><span data-i18n="scrShares">Akcie</span></label>
     </div>
     <p class="hint" data-i18n="scrHint">Vypnuté obrazovky se přeskakují. Nastavení je dostupné vždy.</p>
     <p class="hint" data-i18n="restartHint">Změna obrazovek, zdroje radaru nebo polohy potřebuje restart, takže se ukládá až tlačítkem dole.</p>
     <div class="row"><label data-i18n="autoRotate">Automatické střídání (sekundy, 0 = vypnuto)</label>
       <input type="number" id="autoRotate" min="0" max="3600" step="5"></div>
     <p class="hint" data-i18n="rotHint">Střídání pozastaví přejetí prstem, dlouhý stisk nebo přepnutí z prohlížeče — na trojnásobek intervalu, pak pokračuje samo. Obyčejné klepnutí ho nezastaví, otevřený detail letadla ho drží. Na obrazovce Nastavení se nestřídá.</p>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="scrShares">Akcie</h2>
+    <div class="row"><label>Tickery cenných papírů</label>
+      <input type="text" id="shares" placeholder="AAPL,MSFT,BTC,ETH" onkeydown="if(event.keyCode==13)save()"></div>
+    <p class="hint">Oddělené čárkou, např. AAPL,MSFT. Zobrazí se na 5. obrazovce.</p>
   </div>
 
   <div class="card">
@@ -257,7 +265,7 @@ const D={
   remoteHint:"Rozsah se mění jen na obrazovkách Letadla a Meteoradar. Zásah pozastaví automatické střídání.",
   location:"Poloha",findCity:"Najít město",search:"Hledat",found:"Nalezeno",lat:"Zeměpisná šířka",lon:"Zeměpisná délka",
   locHint:"Změna polohy vyžaduje restart, o který se zařízení postará samo.",
-  screens:"Obrazovky",scrClock:"Hodiny",scrPlanes:"Letadla",scrMeteo:"Meteoradar",scrForecast:"Předpověď",
+  screens:"Obrazovky",scrClock:"Hodiny",scrPlanes:"Letadla",scrMeteo:"Meteoradar",scrForecast:"Předpověď",scrShares:"Akcie",
   board:"Deska",
   scrHint:"Vypnuté obrazovky se přeskakují. Nastavení je dostupné vždy.",autoRotate:"Automatické střídání (sekundy, 0 = vypnuto)",
   rotHint:"Střídání pozastaví přejetí prstem, dlouhý stisk nebo přepnutí z prohlížeče — na trojnásobek intervalu, pak pokračuje samo. Obyčejné klepnutí ho nezastaví, otevřený detail letadla ho drží. Na obrazovce Nastavení se nestřídá.",
@@ -295,7 +303,7 @@ const D={
   remoteHint:"The range only applies to the Aircraft and Weather screens. Using this pauses the automatic cycling.",
   location:"Location",findCity:"Find a town",search:"Search",found:"Found",lat:"Latitude",lon:"Longitude",
   locHint:"Changing the location needs a restart, which the device does by itself.",
-  screens:"Screens",scrClock:"Clock",scrPlanes:"Aircraft",scrMeteo:"Weather radar",scrForecast:"Forecast",
+  screens:"Screens",scrClock:"Clock",scrPlanes:"Aircraft",scrMeteo:"Weather radar",scrForecast:"Forecast",scrShares:"Shares",
   board:"Board",
   scrHint:"Disabled screens are skipped. Settings is always reachable.",autoRotate:"Auto cycling (seconds, 0 = off)",
   rotHint:"Cycling is paused by a swipe, a long press or a switch from the browser - for three times the interval, then it resumes on its own. A plain tap does not stop it; an open aircraft detail holds it. It does not run on the Settings screen.",
@@ -346,7 +354,7 @@ function rgb565ToHex(v){const r=(v>>11&31)*255/31|0,g=(v>>5&63)*255/63|0,b=(v&31
 function hexToRgb565(h){const r=parseInt(h.substr(1,2),16),g=parseInt(h.substr(3,2),16),b=parseInt(h.substr(5,2),16);
  return ((r>>3)<<11)|((g>>2)<<5)|(b>>3);}
 
-const SCR=[["scrClock",0],["scrPlanes",1],["scrMeteo",2],["scrForecast",3],["settings",4]];
+const SCR=[["scrClock",0],["scrPlanes",1],["scrMeteo",2],["scrForecast",3],["scrShares",4],["settings",5]];
 function drawScrBtns(cur,enabled){
  $("scrBtns").innerHTML=SCR.map(([k,i])=>{
   const on=enabled?enabled[i]:true;
@@ -401,6 +409,7 @@ const AUTO = [
  ["meteoLegend","change","meteoLegend",e=>e.checked],
  ["watch","change","watch",e=>e.value],
  ["autoRotate","change","autoRotate",e=>+e.value],
+ ["shares","change","shares",e=>e.value],
 ];
 function wireAutoSave(){
  AUTO.forEach(([id,ev,key,get])=>{
@@ -420,7 +429,7 @@ async function load(){
  $("wifiHintTxt").textContent=CFG.apMode?D[L].wifiHint:D[L].wifiHintSta;
  $("lat").value=CFG.lat.toFixed(4);$("lon").value=CFG.lon.toFixed(4);
  $("sClock").checked=CFG.screens.clock;$("sPlanes").checked=CFG.screens.planes;
- $("sMeteo").checked=CFG.screens.meteo;$("sForecast").checked=CFG.screens.forecast;
+ $("sMeteo").checked=CFG.screens.meteo;$("sForecast").checked=CFG.screens.forecast;$("sShares").checked=CFG.screens.shares;
  $("autoRotate").value=CFG.autoRotate;$("radarSrc").value=CFG.radarSrc;
  $("meteoLegend").checked=CFG.meteoLegend;
  $("briDay").value=CFG.briDay;$("briNight").value=CFG.briNight;
@@ -430,6 +439,7 @@ async function load(){
  $("altMin").value=CFG.altMin;$("altMax").value=CFG.altMax;
  pwState();
  $("onlyCallsign").checked=CFG.onlyCallsign;$("squawkAlert").checked=CFG.squawkAlert;$("watch").value=CFG.watch||"";
+ $("shares").value=CFG.shares||"";
  bri();wireAutoSave();status();
 }
 // Says whether a password is actually set - more use than a static sentence,
@@ -459,7 +469,7 @@ async function status(){
 }
 setInterval(status,10000);
 
-function body(){return{lat:parseFloat($("lat").value),lon:parseFloat($("lon").value),
+function body(){return{shares:$("shares").value,lat:parseFloat($("lat").value),lon:parseFloat($("lon").value),
  lang:parseInt($("uiLang").value),metric:$("metric").checked,
  briDay:+$("briDay").value,briNight:+$("briNight").value,nightAuto:$("nightAuto").checked,
  nightOffset:+$("nightOffset").value,radarSrc:+$("radarSrc").value,autoRotate:+$("autoRotate").value,
@@ -469,7 +479,7 @@ function body(){return{lat:parseFloat($("lat").value),lon:parseFloat($("lon").va
  altMin:+$("altMin").value,altMax:+$("altMax").value,onlyCallsign:$("onlyCallsign").checked,
  squawkAlert:$("squawkAlert").checked,watch:$("watch").value,
  password:$("adminPass").value,newPassword:$("newPass").value,
- screens:{clock:$("sClock").checked,planes:$("sPlanes").checked,meteo:$("sMeteo").checked,forecast:$("sForecast").checked}};}
+ screens:{clock:$("sClock").checked,planes:$("sPlanes").checked,meteo:$("sMeteo").checked,forecast:$("sForecast").checked,shares:$("sShares").checked}};}
 
 async function save(){
  const r=await fetch("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body())});

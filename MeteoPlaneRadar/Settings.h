@@ -98,7 +98,9 @@ bool     Settings_OnlyWithCallsign();
 void     Settings_SetOnlyWithCallsign(bool on);
 bool     Settings_SquawkAlert();
 void     Settings_SetSquawkAlert(bool on);
-const char* Settings_WatchCallsign();      // "" = nothing watched
+const char* Settings_WatchCallsign();
+const char* Settings_SharesTickers();
+void Settings_SetSharesTickers(const char* s);      // "" = nothing watched
 void     Settings_SetWatchCallsign(const char* s);
 
 // --- UI state (debounced writes) --------------------------------------------

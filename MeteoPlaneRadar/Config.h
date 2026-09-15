@@ -284,8 +284,9 @@
 #define SCREEN_PLANES_I   1
 #define SCREEN_METEO_I    2
 #define SCREEN_FORECAST_I 3
-#define SCREEN_SETTINGS_I 4
-#define SCREEN_N          5
+#define SCREEN_SHARES_I   4
+#define SCREEN_SETTINGS_I 5
+#define SCREEN_N          6
 
 // Automatic screen cycling: 0 = off, otherwise SECONDS between switches (it was
 // minutes up to 0.6.0 - see Settings.h).

@@ -37,7 +37,7 @@ static uint8_t s_lang   = LANG_CZ;
 // on except the forecast, so an existing device looks familiar after the update
 // and the new screens are discovered rather than sprung on the user.
 static uint8_t s_scrMask = (1 << SCREEN_CLOCK_I) | (1 << SCREEN_PLANES_I) |
-                           (1 << SCREEN_METEO_I) | (1 << SCREEN_FORECAST_I);
+                           (1 << SCREEN_METEO_I) | (1 << SCREEN_FORECAST_I) | (1 << SCREEN_SHARES_I);
 static uint16_t s_autoRot = 0;
 static uint8_t s_radarSrc = RADAR_SRC_CHMU;
 static bool    s_mtLegend = true;
@@ -53,6 +53,7 @@ static uint16_t s_altMax = 60000;
 static bool     s_onlyCs = false;
 static bool     s_sqAlert = true;
 static char     s_watch[10] = "";
+static char     s_shares[64] = "AAPL,MSFT,GOOG,AMZN,META";
 
 // --- UI state ---
 static uint8_t  s_rngP = 1;
@@ -97,6 +98,7 @@ void Settings_Begin() {
     s_metric = prefs.getBool("metric", false);
     s_lang   = prefs.getUChar("lang", LANG_CZ);
     s_scrMask = prefs.getUChar("scrM", s_scrMask);
+    s_scrMask |= (1 << SCREEN_SHARES_I); // Force enable new screen for existing saves
     // Cycling interval moved from minutes to seconds - see Settings.h. The old
     // key is converted exactly once, so an updated device keeps its setting.
     if (prefs.isKey("autoRS")) {
@@ -115,9 +117,11 @@ void Settings_Begin() {
     s_onlyCs = prefs.getBool("onlyCs", false);
     s_sqAlert = prefs.getBool("sqAl", true);
     prefs.getString("watch", s_watch, sizeof(s_watch));
+    prefs.getString("shares", s_shares, sizeof(s_shares));
     s_rngP   = prefs.getUChar("rngP", 1);
     s_rngM   = prefs.getUChar("rngM", 1);
     s_scr    = prefs.getUChar("scr", SCREEN_PLANES_I);
+    if (s_scr == SCREEN_SHARES_I) s_scr = SCREEN_PLANES_I; // one-time fix for index shift
     s_top    = prefs.getUShort("topb", 0);
     prefs.getString("pw", s_pw, sizeof(s_pw));
     prefs.getString("ssid", s_ssid, sizeof(s_ssid));
@@ -270,6 +274,18 @@ void Settings_SetOnlyWithCallsign(bool on) { s_onlyCs = on; putBool("onlyCs", on
 bool Settings_SquawkAlert() { return s_sqAlert; }
 void Settings_SetSquawkAlert(bool on) { s_sqAlert = on; putBool("sqAl", on); }
 const char* Settings_WatchCallsign() { return s_watch; }
+
+const char* Settings_SharesTickers() { return s_shares; }
+void Settings_SetSharesTickers(const char* s) {
+  if (!s) s = "";
+  strncpy(s_shares, s, sizeof(s_shares) - 1);
+  s_shares[sizeof(s_shares) - 1] = '\0';
+  for (char* p = s_shares; *p; p++) *p = toupper((unsigned char)*p);
+  putStr("shares", s_shares);
+  Serial.println("Wrote NVS: shares ->");
+  Serial.println(s_shares);
+}
+
 void Settings_SetWatchCallsign(const char* s) {
   if (!s) s = "";
   strncpy(s_watch, s, sizeof(s_watch) - 1);
@@ -344,6 +360,7 @@ void Settings_ToJson(JsonObject o) {
   o["altMax"] = s_altMax;
   o["onlyCallsign"] = s_onlyCs;
   o["squawkAlert"] = s_sqAlert;
+  o["shares"] = s_shares;
   o["watch"] = s_watch;
   o["hasPassword"] = Settings_HasAdminPassword();
   JsonObject scr = o["screens"].to<JsonObject>();
@@ -351,6 +368,7 @@ void Settings_ToJson(JsonObject o) {
   scr["planes"]   = Settings_ScreenEnabled(SCREEN_PLANES_I);
   scr["meteo"]    = Settings_ScreenEnabled(SCREEN_METEO_I);
   scr["forecast"] = Settings_ScreenEnabled(SCREEN_FORECAST_I);
+  scr["shares"] = Settings_ScreenEnabled(SCREEN_SHARES_I);
 }
 
 bool Settings_FromJson(JsonObjectConst in) {
@@ -384,6 +402,7 @@ bool Settings_FromJson(JsonObjectConst in) {
   setIf("secColor",     [](JsonVariantConst v){ Settings_SetSecondsColor(v.as<uint16_t>()); });
   setIf("onlyCallsign", [](JsonVariantConst v){ Settings_SetOnlyWithCallsign(v.as<bool>()); });
   setIf("squawkAlert",  [](JsonVariantConst v){ Settings_SetSquawkAlert(v.as<bool>()); });
+  setIf("shares",       [](JsonVariantConst v){ Settings_SetSharesTickers(v.as<const char*>()); });
   setIf("watch",        [](JsonVariantConst v){ Settings_SetWatchCallsign(v.as<const char*>()); });
 
   if (!in["altMin"].isNull() || !in["altMax"].isNull()) {
@@ -400,6 +419,7 @@ bool Settings_FromJson(JsonObjectConst in) {
       { "planes",   SCREEN_PLANES_I },
       { "meteo",    SCREEN_METEO_I },
       { "forecast", SCREEN_FORECAST_I },
+      { "shares",   SCREEN_SHARES_I },
     };
     for (auto& m : M) {
       JsonVariantConst v = scr[m.key];
@@ -431,10 +451,10 @@ void Settings_ClearAll() {
   s_briDay = 80; s_briNight = 25; s_nightAuto = true; s_nightOff = 0; s_isNight = false;
   s_metric = false; s_lang = LANG_CZ; Lang_Set(s_lang);
   s_scrMask = (1 << SCREEN_CLOCK_I) | (1 << SCREEN_PLANES_I) |
-              (1 << SCREEN_METEO_I) | (1 << SCREEN_FORECAST_I);
+              (1 << SCREEN_METEO_I) | (1 << SCREEN_FORECAST_I) | (1 << SCREEN_SHARES_I);
   s_autoRot = 0; s_radarSrc = RADAR_SRC_CHMU; s_mtLegend = true;
   s_secStyle = SEC_STYLE_DOTS; s_clockCol = 0xFFFF; s_secCol = 0x05FF;
-  s_altMin = 0; s_altMax = 60000; s_onlyCs = false; s_sqAlert = true; s_watch[0] = '\0';
+  s_altMin = 0; s_altMax = 60000; s_onlyCs = false; s_sqAlert = true; s_watch[0] = '\0'; strcpy(s_shares, "AAPL,MSFT,GOOG,AMZN,META");
   s_rngP = 1; s_rngM = 1; s_scr = SCREEN_PLANES_I; s_top = 0;
   s_pw[0] = '\0';
   s_ssid[0] = '\0'; s_wpass[0] = '\0';

@@ -36,7 +36,7 @@
   X(S_OK,            "OK",                 "OK",                 "OK") \
   X(S_NO_LOCATION,   "Nastav polohu",      "Nastavte polohu",    "Set your location") \
   X(S_KM,            "km",                 "km",                 "km") \
-  X(S_SETTINGS,      "Nastaveni",          "Nastavení",          "Settings") \
+  X(S_SETTINGS,      "Nastav",          "Nastav",          "Settings") \
   X(S_BRIGHTNESS,    "Jas",                "Jas",                "Brightness") \
   X(S_NOT_CONNECTED, "nepripojeno",        "nepřipojeno",        "not connected") \
   X(S_LOCATION,      "Poloha:",            "Poloha:",            "Location:") \

@@ -88,6 +88,7 @@
 #include "ScreenWeather.h"
 #include "ScreenClock.h"
 #include "ScreenForecast.h"
+#include "ScreenShares.h"
 #include "ScreenSettings.h"
 #include "Forecast.h"
 #include "NightMode.h"
@@ -273,6 +274,7 @@ static void drawActive() {
     case SCREEN_METEO_I:    ScreenWeather_Draw();  break;
     case SCREEN_FORECAST_I: ScreenForecast_Draw(); break;
     case SCREEN_SETTINGS_I: ScreenSettings_Draw(); break;
+    case SCREEN_SHARES_I:   ScreenShares_Draw();   break;
   }
   drawScreenDots();
   gfx->flush();    // hand the framebuffer over; Canvas16 switches to the other
@@ -285,6 +287,7 @@ static void enterActive() {
     case SCREEN_METEO_I:    ScreenWeather_Enter();  break;
     case SCREEN_FORECAST_I: ScreenForecast_Enter(); break;
     case SCREEN_SETTINGS_I: ScreenSettings_Enter(); break;
+    case SCREEN_SHARES_I:   ScreenShares_Enter();   break;
   }
   drawActive();
 }
@@ -323,6 +326,7 @@ static bool activeTick() {
     case SCREEN_METEO_I:    return ScreenWeather_Tick();
     case SCREEN_FORECAST_I: return ScreenForecast_Tick();
     case SCREEN_SETTINGS_I: return ScreenSettings_Tick();
+    case SCREEN_SHARES_I:   return ScreenShares_Tick();
   }
   return false;
 }
@@ -340,6 +344,7 @@ static bool activeTap(int x, int y) {
     case SCREEN_CLOCK_I:    return ScreenClock_HandleTap(x, y);
     case SCREEN_PLANES_I:   return ScreenPlanes_HandleTap(x, y);
     case SCREEN_SETTINGS_I: return ScreenSettings_HandleTap(x, y);
+    case SCREEN_SHARES_I:   return ScreenShares_HandleTap(x, y);
     default: return false;
   }
 }

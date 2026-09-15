@@ -1,3 +1,4 @@
+#include "ScreenShares.h"
 // =============================================================================
 //  MeteoPlaneRadar
 //  The configuration web server. See WebConfig.h.
@@ -85,9 +86,10 @@ static void handleRoot() {
 }
 
 static void handleGetConfig() {
-  JsonDocument doc;
+  JsonDocument doc; // Dynamically sized in v7
   JsonObject o = doc.to<JsonObject>();
   Settings_ToJson(o);
+  o["shares"] = Settings_SharesTickers();
   o["version"] = FW_VERSION;
   o["apMode"]  = s_apMode;
   o["ip"]      = s_apMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
@@ -97,6 +99,10 @@ static void handleGetConfig() {
 static void handlePostConfig() {
   JsonDocument doc;
   if (!readBody(doc)) { s_srv.send(400, "application/json", "{\"error\":\"json\"}"); return; }
+
+  Serial.println("INCOMING PAYLOAD:");
+  Serial.println(s_srv.arg("plain"));
+
 
   // The password is write-only and never round-trips through the page, so it is
   // handled apart from the rest of the settings.
@@ -118,12 +124,37 @@ static void handlePostConfig() {
 
   const double oldLat = Settings_Lat(), oldLon = Settings_Lon();
   const uint8_t oldSrc = Settings_RadarSource();
+  String oldShares = Settings_SharesTickers();
   const uint8_t oldMask = (Settings_ScreenEnabled(SCREEN_CLOCK_I) << 0) |
                           (Settings_ScreenEnabled(SCREEN_PLANES_I) << 1) |
                           (Settings_ScreenEnabled(SCREEN_METEO_I) << 2) |
-                          (Settings_ScreenEnabled(SCREEN_FORECAST_I) << 3);
+                          (Settings_ScreenEnabled(SCREEN_FORECAST_I) << 3) |
+                          (Settings_ScreenEnabled(SCREEN_SHARES_I) << 4);
 
   Settings_FromJson(doc.as<JsonObjectConst>());
+
+  
+  // Force manual extraction from the raw HTTP payload in case ArduinoJson chokes on string conversion
+  String rawJson = s_srv.arg("plain");
+  int shareIdx = rawJson.indexOf("\"shares\":\"");
+  if (shareIdx > 0) {
+    int startIdx = shareIdx + 10;
+    int endIdx = rawJson.indexOf("\"", startIdx);
+    if (endIdx > startIdx) {
+      String extracted = rawJson.substring(startIdx, endIdx);
+      Settings_SetSharesTickers(extracted.c_str());
+      Serial.print("Manually extracted shares: ");
+      Serial.println(extracted);
+    }
+  }
+  
+  if (doc["shares"].is<const char*>()) {
+    Settings_SetSharesTickers(doc["shares"].as<const char*>());
+    Serial.println("Tickers saved to flash:");
+    Serial.println(doc["shares"].as<const char*>());
+  }
+
+
 
   // Applied straight away - these are the ones you want to see change while
   // you are still looking at the slider.
@@ -132,10 +163,15 @@ static void handlePostConfig() {
   const uint8_t newMask = (Settings_ScreenEnabled(SCREEN_CLOCK_I) << 0) |
                           (Settings_ScreenEnabled(SCREEN_PLANES_I) << 1) |
                           (Settings_ScreenEnabled(SCREEN_METEO_I) << 2) |
-                          (Settings_ScreenEnabled(SCREEN_FORECAST_I) << 3);
+                          (Settings_ScreenEnabled(SCREEN_FORECAST_I) << 3) |
+                          (Settings_ScreenEnabled(SCREEN_SHARES_I) << 4);
   const bool moved = (fabs(oldLat - Settings_Lat()) > 1e-6) ||
                      (fabs(oldLon - Settings_Lon()) > 1e-6);
   if (moved) Forecast_Invalidate();
+  if (strcmp(oldShares.c_str(), Settings_SharesTickers()) != 0) {
+    Serial.println("Tickers changed, invalidating shares screen!");
+    ScreenShares_Invalidate();
+  }
 
   // These reach too far into cached state (decoded radar frames, allocated
   // buffers, which screen is even reachable) to be worth unpicking at runtime.
