@@ -61,7 +61,7 @@ static void fetchPrices() {
     
     idx++;
     t = strtok(NULL, ", ");
-    delay(500);
+    delay(100);
   }
   
   // Clear the rest
