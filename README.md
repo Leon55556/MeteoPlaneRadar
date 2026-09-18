@@ -1,10 +1,13 @@
-Toto je fork z - https://github.com/petus/MeteoPlaneRadar # MeteoPlaneRadar od Chiptron. Přidána je stránka pro zobrazení cen amerických akcií a BTC. Akcie je možné zadávat z webového rozhraní.
+Toto je fork z - https://github.com/petus/MeteoPlaneRadar # MeteoPlaneRadar od Chiptron **[chiptron.cz](https://chiptron.cz)**. Přidána je stránka pro zobrazení cen amerických akcií a BTC. Akcie je možné zadávat z webového rozhraní.
 
 **Zdroje dat:**
 
 https://finnhub.io/  Americké akcie. **Pozor použijte vlastní token.** Řádek 39 v ScreenShares.cpp
 
 https://api.coingecko.com/   BTC
+
+---
+---
 
 # MeteoPlaneRadar
 
